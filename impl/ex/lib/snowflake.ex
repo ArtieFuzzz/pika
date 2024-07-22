@@ -58,35 +58,6 @@ defmodule Pika.Snowflake do
     {:ok, generate_initial_state(epoch)}
   end
 
-  @doc """
-  Generates a new Snowflake
-  """
-  @spec generate() :: integer()
-  def generate do
-    GenServer.call(__MODULE__, {:generate, now_ts()})
-  end
-
-  @doc """
-  Generates a new Snowflake with the given `timestamp`
-  """
-  @spec generate(integer()) :: integer()
-  def generate(timestamp) do
-    GenServer.call(__MODULE__, {:generate, timestamp})
-  end
-
-  @doc """
-  Decodes a Snowflake and returns:
-
-  - timestamp
-  - epoch
-  - node_id
-  - seq
-  """
-  @spec decode(integer()) :: any()
-  def decode(snowflake) when is_integer(snowflake) do
-    GenServer.call(__MODULE__, {:decode, snowflake})
-  end
-
   def handle_call(
         {:decode, snowflake},
         _from,
@@ -116,6 +87,35 @@ defmodule Pika.Snowflake do
       end
 
     {:reply, snowflake, {node_id, epoch, seq, maybe_sequence_exhausted(seq, timestamp)}}
+  end
+
+  @doc """
+  Generates a new Snowflake
+  """
+  @spec generate() :: integer()
+  def generate do
+    GenServer.call(__MODULE__, {:generate, now_ts()})
+  end
+
+  @doc """
+  Generates a new Snowflake with the given `timestamp`
+  """
+  @spec generate(integer()) :: integer()
+  def generate(timestamp) do
+    GenServer.call(__MODULE__, {:generate, timestamp})
+  end
+
+  @doc """
+  Decodes a Snowflake and returns:
+
+  - timestamp
+  - epoch
+  - node_id
+  - seq
+  """
+  @spec decode(integer()) :: any()
+  def decode(snowflake) when is_integer(snowflake) do
+    GenServer.call(__MODULE__, {:decode, snowflake})
   end
 
   @doc false
