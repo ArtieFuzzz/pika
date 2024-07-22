@@ -1,3 +1,10 @@
+defmodule Pika.DecodedSnowflake do
+  @moduledoc """
+  Represents a decoded `Snowflake`
+  """
+  defstruct [:id, :timestamp, :node_id, :seq, :epoch]
+end
+
 defmodule Pika.Snowflake do
   import Bitwise
   alias Pika.Utils
@@ -40,18 +47,15 @@ defmodule Pika.Snowflake do
   def start_link([]), do: start_link()
 
   def start_link(epoch) when is_integer(epoch) do
-    GenServer.start_link(__MODULE__, {Utils.compute_node_id(), epoch, 0, 0}, name: __MODULE__)
+    GenServer.start_link(__MODULE__, epoch, name: __MODULE__)
   end
 
   def start_link do
-    # State: {node_id, epoch, seq, last_sequence_exhaustion}
-    GenServer.start_link(__MODULE__, {Utils.compute_node_id(), 1_640_995_200_000, 0, 0},
-      name: __MODULE__
-    )
+    GenServer.start_link(__MODULE__, nil, name: __MODULE__)
   end
 
-  def init(state) do
-    {:ok, state}
+  def init(epoch) do
+    {:ok, generate_initial_state(epoch)}
   end
 
   @doc """
@@ -92,7 +96,9 @@ defmodule Pika.Snowflake do
     node_id = snowflake >>> 12 &&& 0b11_1111_1111
     seq = snowflake &&& 0b1111_1111_1111
 
-    {:reply, %{timestamp: timestamp, epoch: epoch, node_id: node_id, seq: seq}, state}
+    {:reply,
+     %Pika.DecodedSnowflake{timestamp: timestamp, epoch: epoch, node_id: node_id, seq: seq},
+     state}
   end
 
   def handle_call({:generate, timestamp}, _from, {node_id, epoch, seq, last_seq_exhaustion}) do
@@ -109,12 +115,16 @@ defmodule Pika.Snowflake do
         seq + 1
       end
 
-    if timestamp === last_seq_exhaustion do
-      {:reply, snowflake, {node_id, epoch, seq, timestamp}}
-    else
-      {:reply, snowflake, {node_id, epoch, seq, now_ts()}}
-    end
+    {:reply, snowflake, {node_id, epoch, seq, maybe_sequence_exhausted(seq, timestamp)}}
   end
+
+  @doc false
+  defp maybe_sequence_exhausted(sequence, timestamp) when sequence == 4095, do: timestamp
+  defp maybe_sequence_exhausted(_sequence, _timestamp), do: now_ts()
+
+  @doc false
+  defp generate_initial_state(nil), do: generate_initial_state(1_640_995_200_000)
+  defp generate_initial_state(epoch), do: {Utils.compute_node_id(), epoch, 0, 0}
 
   @doc false
   defp block(timestamp) do
