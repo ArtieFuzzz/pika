@@ -2,7 +2,7 @@ defmodule Pika.DecodedSnowflake do
   @moduledoc """
   Represents a decoded `Snowflake`
   """
-  defstruct [:id, :timestamp, :node_id, :seq, :epoch]
+  defstruct [:timestamp, :node_id, :seq, :epoch]
 end
 
 defmodule Pika.Snowflake do

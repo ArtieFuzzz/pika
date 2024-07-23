@@ -81,13 +81,15 @@ defmodule Pika do
   def deconstruct(id) do
     prefixes = Application.get_env(:pika, :prefixes)
 
-    fragments = id |> String.split("_")
-    [prefix, tail] = fragments
+    [prefix, tail] = id |> String.split("_")
 
     [prefix_record] = Enum.filter(prefixes, fn m -> m.prefix == prefix end)
-    decoded_tail = Base.decode64!(tail, padding: false)
-    tail_fragments = decoded_tail |> String.split("_")
-    snowflake = tail_fragments |> Enum.at(length(tail_fragments) - 1) |> String.to_integer()
+
+    snowflake =
+      Base.decode64!(tail, padding: false)
+      |> String.split("_")
+      |> List.last()
+      |> String.to_integer()
 
     decoded_snowflake = Snowflake.decode(snowflake)
 
