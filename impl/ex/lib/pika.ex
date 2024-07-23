@@ -22,7 +22,7 @@ defmodule Pika do
 
   @doc false
   defp _gen(prefix, snowflake, true) do
-    bytes = :rand.bytes(16)
+    bytes = :crypto.strong_rand_bytes(16)
 
     tail =
       "_s_#{Base.encode32(bytes, padding: false, case: :lower)}_#{snowflake}"
@@ -80,9 +80,7 @@ defmodule Pika do
   """
   def deconstruct(id) do
     prefixes = Application.get_env(:pika, :prefixes)
-
     [prefix, tail] = id |> String.split("_")
-
     [prefix_record] = Enum.filter(prefixes, fn m -> m.prefix == prefix end)
 
     snowflake =
