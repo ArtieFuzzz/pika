@@ -6,7 +6,7 @@ defmodule Pika.MixProject do
   def project do
     [
       app: :pika,
-      version: "0.1.4",
+      version: "0.2.0",
       elixir: "~> 1.14",
       start_permanent: Mix.env() == :prod,
       package: package(),
