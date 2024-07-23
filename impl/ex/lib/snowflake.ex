@@ -86,7 +86,8 @@ defmodule Pika.Snowflake do
         seq + 1
       end
 
-    {:reply, snowflake, {node_id, epoch, seq, maybe_sequence_exhausted(seq, timestamp)}}
+    {:reply, snowflake,
+     {node_id, epoch, seq, maybe_sequence_exhausted(seq, timestamp, last_seq_exhaustion)}}
   end
 
   @doc """
@@ -119,8 +120,10 @@ defmodule Pika.Snowflake do
   end
 
   @doc false
-  defp maybe_sequence_exhausted(sequence, timestamp) when sequence == 4095, do: timestamp
-  defp maybe_sequence_exhausted(_sequence, _timestamp), do: now_ts()
+  defp maybe_sequence_exhausted(4095, timestamp, _last_seq_exhaustion), do: timestamp
+
+  defp maybe_sequence_exhausted(_sequence, _timestamp, last_seq_exhaustion),
+    do: last_seq_exhaustion
 
   @doc false
   defp generate_initial_state(nil), do: generate_initial_state(1_640_995_200_000)
